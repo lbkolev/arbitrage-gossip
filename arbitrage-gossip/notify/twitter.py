@@ -32,7 +32,7 @@ class Twitter(BaseNotify):
         API = tweepy.API(auth)
 
         tweet = f"""🏃🏃🏃🏃🏃
-PIR: #{pair['merged'].upper()}\n
+PAIR: #{pair['merged'].upper()}\n
 Exchange with lower price(#{prices['min']['exchange']}):  {prices['min']['price']}
 Exchange with higher price(#{prices['max']['exchange']}): {prices['max']['price']}
 Pice Difference: {prices['price_diff']} 
