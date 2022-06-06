@@ -33,9 +33,9 @@ class Twitter(BaseNotify):
 
         tweet = f"""🏃🏃🏃🏃🏃
 PAIR: #{pair['merged'].upper()}\n
-Exchange with lower price(#{prices['min']['exchange']}):  {prices['min']['price']}
-Exchange with higher price(#{prices['max']['exchange']}): {prices['max']['price']}
-Pice Difference: {prices['price_diff']} 
+Exchange with lowest price(#{prices['min']['exchange']}):  {prices['min']['price']}
+Exchange with highest price(#{prices['max']['exchange']}): {prices['max']['price']}
+Price Difference: {prices['price_diff']} 
 Price Difference In %: {prices['price_diff_perc']}
 🏃🏃🏃🏃🏃
 
