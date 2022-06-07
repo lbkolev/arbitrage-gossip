@@ -24,7 +24,7 @@ https://twitter.com/voices89394387
 
 
 ## Explained
-That's a bot that asynchronously fetches information from 4(for now) centralized cryptocurrency exchanges and reports it to twitter, given that you have api access, else it only logs the information in the server.
+Arbitrage-gossip is a bot that asynchronously fetches the prices from 4(for now) centralized cryptocurrency exchanges for a certain pair *pair* and reports  to twitter when big enough price difference *N* occurs between the exchanges, given that you have twitter api access, else it only logs the information to the server.
 
 ```mermaid
 graph LR
@@ -44,7 +44,7 @@ git clone https://github.com/lbkolev/arbitrage-gossip
 cd arbitrage-gossip
 ```
 
-Setup a virtual environment and activate it. 
+Setup a virtual environment. 
 ```bash
 $ python -m venv .venv && . .venv/bin/activate
 ```
@@ -82,13 +82,13 @@ optional arguments:
 
 ## Examples
 
-1. Monitor pair *BTCUSDT* on each exchange that offers it, and report to twitter whenever a price difference of 1% occurs between any of the exchanges. Reports no more often than 180 seconds. 
+1. Monitor pair *BTCUSDT* on each exchange that offers it, and report to twitter whenever a price difference of atleast 1% occurs between any of the exchanges. Reports no more often than 180 seconds. 
 The information is logged by default to /var/log/arbitrager/btcusdt.log.
 ```bash
 $ python arbitrage-gossip/main.py --base btc --quote usdt --report-to=twitter --cooldown=180 --threshold=1
 ```
 ##
-2. Monitor pair *LUNAUSDT* on each exchange that offers it, and report to twitter whenever a price difference of 0.3% occurs between any of the exchanges. Reports no more often than 60 seconds. 
+2. Monitor pair *LUNAUSDT* on each exchange that offers it, and report to twitter whenever a price difference of atleast 0.3% occurs between any of the exchanges. Reports no more often than 60 seconds. 
 The information is logged by default to /var/log/arbitrager/lunausdt.log
 ```bash
 $ python arbitrage-gossip/main.py --base luna --quote usdt --report-to=twitter --cooldown=60 --threshold=0.3
@@ -99,7 +99,7 @@ $ python arbitrage-gossip/main.py --base luna --quote usdt --report-to=twitter -
 $ python arbitrage-gossip/main.py --base doge --quote busd --log-dir=/tmp --log-level=debug
 ```
 ##
-4. Monitor pair *CAKEDAI* on each exchange that offers it, and report to twitter whenever a price difference of 3% occurs between any of the exchanges. Reports no more often than 10 seconds.
+4. Monitor pair *CAKEDAI* on each exchange that offers it, and report to twitter whenever a price difference of atleast 3% occurs between any of the exchanges. Reports no more often than 10 seconds.
 The information is logged in /root/cake.log, as specified by --log-file.
 ```bash
 $ python arbitrage-gossip/main.py --base cake --quote dai --log-level=error --log-file=/root/cake.log --report-to=twitter --threshold=3 --cooldown=10 
