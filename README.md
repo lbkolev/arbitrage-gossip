@@ -24,7 +24,7 @@ https://twitter.com/voices89394387
 
 
 ## Explained
-That's a bot that asynchronously fetches information from 4(for now) centralized cryptocurrency exchanges and reports it to twitter, given that you have api access, else it only logs the information in the server.
+Arbitrage-gossip is a bot that asynchronously fetches the prices from 4(for now) centralized cryptocurrency exchanges for a certain pair *pair* and reports  to twitter when big enough price difference *N* occurs between the exchanges, given that you have twitter api access, else it only logs the information to the server.
 
 ```mermaid
 graph LR
