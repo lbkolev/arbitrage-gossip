@@ -48,7 +48,7 @@ def parse_args() -> argparse.Namespace:
         "--report-to",
         type=str,
         help="Comma separated list of the platforms we'll notify. **For now only twitter is supported**.",
-        default="",
+        default="none",
     )
     argsparse.add_argument(
         "--cooldown",
@@ -57,12 +57,16 @@ def parse_args() -> argparse.Namespace:
         default=60.0,
     )
     args = argsparse.parse_args()
-    args.report_to = args.report_to.split(",")
 
-    supported_platforms = ["twitter"]
-    for platform in args.report_to:
-        if platform not in supported_platforms:
-            argsparse.print_help()
-            sys.exit(1)
+    if args.report_to == "none":
+        ...
+    else:
+        args.report_to = args.report_to.split(",")
+
+        supported_platforms = ["twitter"]
+        for platform in args.report_to:
+            if platform not in supported_platforms:
+                argsparse.print_help()
+                sys.exit(1)
 
     return args
