@@ -11,10 +11,10 @@ from exchanges.base import BaseExchange
 class Huobi(BaseExchange):
     """Implements monitoring for Huobi."""
 
-    """ Huobi http api url. """
+    """ Huobi http api url """
     api: str = "https://api.huobi.pro"
 
-    """ Huobi websocket api url. """
+    """ Huobi websocket api url """
     api_ws: str = "wss://api.huobi.pro/ws"
 
     def __init__(
@@ -23,26 +23,11 @@ class Huobi(BaseExchange):
         timeout: float = 10.0,
         receive_timeout: float = 60.0,
     ) -> None:
-        """Monitored pair."""
-        self.pair = pair.lower()
-
-        """ Exchange name. """
-        self.exchange = self.__class__.__name__
-
-        """ Websocket connection timeout. """
-        self.timeout: float = timeout
-        self.receive_timeout: float = receive_timeout
-
-        """ Holds all live websocket data. """
-        self.data: dict[str, Any] = {}
-
-        """ If pair isn't offered by exchange =False else =True."""
-        self.monitor: bool
-
+        super().__init__(pair.lower(), timeout, receive_timeout)
         logging.info(f"{self.exchange} Initialized with {self.__dict__}")
 
     async def check_pair_exists(self) -> bool:
-        """Check if a pair is offered by the exchange. Returns bool."""
+        """Check if the pair is listed by Huobi."""
 
         url: str = f"{self.api}/v2/settings/common/symbols/"
         async with aiohttp.ClientSession() as session:
@@ -62,10 +47,10 @@ class Huobi(BaseExchange):
                 return False
 
     async def run(self) -> None:
-        """Run an infinite socket connection if the pair is offered by the exchange."""
+        """Fetch the price from Huobi."""
 
-        # don't monitor this exchange if the pair isn't offered
-        if not self.monitor:
+        # don't monitor the exchange if the pair isn't listed
+        if not await self.check_pair_exists():
             return
 
         while True:
@@ -98,7 +83,7 @@ class Huobi(BaseExchange):
 
                             if "tick" in msg:
                                 self.data = {
-                                    "price": msg["tick"]["lastPrice"],
+                                    "price": float(msg["tick"]["lastPrice"]),
                                     "time": datetime.utcfromtimestamp(
                                         msg["ts"] / 1000
                                     ).strftime("%Y/%m/%dT%H:%M:%S.%f"),
@@ -108,11 +93,9 @@ class Huobi(BaseExchange):
                             logging.warning(
                                 f"{self.exchange} Most likely received a None from the server to close the connection. Restarting."
                             )
-                            # await ws.close()
                             break
                         except asyncio.exceptions.TimeoutError as e:
                             logging.exception(e)
-                            # await ws.close()
                             break
                         except (
                             asyncio.exceptions.CancelledError,

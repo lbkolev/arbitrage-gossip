@@ -8,83 +8,72 @@ from typing import Any
 
 from exchanges.base import BaseExchange
 
+
 class KuCoin(BaseExchange):
-    """Implements monitoring for KuCoin """
+    """Implements monitoring for KuCoin."""
 
     """ Kucoin http api url  """
     api: str = "https://api.kucoin.com"
 
-    def __init__(self, 
-        pair, 
-        timeout = 10.0, 
-        receive_timeout = 60.0 
+    def __init__(
+        self, pair: str, timeout: float = 10.0, receive_timeout: float = 60.0
     ) -> None:
-
-        """ Monitored pair """
-        self.pair = pair.upper()
-
-        """ Exchange name """
-        self.exchange = self.__class__.__name__
-
-        """ Websocket timeout in seconds """
-        self.timeout = timeout
-        self.receive_timeout = receive_timeout
-
-        """ Holds all live websocket data """
-        self.data : dict[str, Any] = {}
-
-        """ If the pair isn't offered by the exchange =False else =True """
-        self.monitor: bool
-
+        super().__init__(pair.upper(), timeout, receive_timeout)
         logging.info(f"{self.exchange} Initialized with {self.__dict__}")
 
     async def check_pair_exists(self) -> bool:
+        """Check if the pair is offered by KuCoin."""
         url = f"{self.api}/api/v1/symbols"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
-                logging.debug({"{self.exchange} check_pair_exists response" : resp})
+                logging.debug({"{self.exchange} check_pair_exists response": resp})
                 resp = await resp.json()
-                for pairs in resp['data']:
-                    if pairs['symbol'] == self.pair and pairs['enableTrading'] == True:
+                for pairs in resp["data"]:
+                    if pairs["symbol"] == self.pair and pairs["enableTrading"] == True:
                         logging.info(
                             f'{self.exchange} pair "{self.pair}" is offered. MONITORING {self.exchange}'
                         )
                         return True
 
-                    if pairs['symbol'] == self.pair and pairs['enableTrading'] == False:
+                    if pairs["symbol"] == self.pair and pairs["enableTrading"] == False:
                         logging.warning(
                             f'{self.exchange} pair "{self.pair}" is currently disabled. NOT MONITORING {self.exchange}'
                         )
                         return False
-                
+
                 f'{self.exchange} pair "{self.pair}" is offered. MONITORING {self.exchange}'
                 return False
 
     # https://docs.kucoin.com/#apply-connect-token
     # 'make request as follows to obtain the server list and temporary public token'
     async def get_api_ws_and_token(self):
+        """Get the websocket url and the ping interval."""
         url = f"{self.api}/api/v1/bullet-public"
         async with aiohttp.ClientSession() as session:
             async with session.post(url) as resp:
                 resp = await resp.json()
 
-                if int(resp['code']) == 200000:
-                    api_ws = resp['data']['instanceServers'][0]['endpoint']
-                    token = resp['data']['token']
-                    ping_interval = resp['data']['instanceServers'][0]['pingInterval']
+                if int(resp["code"]) == 200000:
+                    api_ws = resp["data"]["instanceServers"][0]["endpoint"]
+                    token = resp["data"]["token"]
+                    ping_interval = resp["data"]["instanceServers"][0]["pingInterval"]
 
-                    logging.debug(f"{self.exchange} Kucoin ws url: {api_ws}?token={token}")
+                    logging.debug(
+                        f"{self.exchange} Kucoin ws url: {api_ws}?token={token}"
+                    )
 
                     return f"{api_ws}?token={token}", ping_interval
 
-                logging.warning(f"{self.exchange} Unable to get ws url and token. NOT MONITORING {self.exchange}")
+                logging.warning(
+                    f"{self.exchange} Unable to get ws url and token. NOT MONITORING {self.exchange}"
+                )
                 return False
 
     async def run(self) -> None:
-        """ Run an infinite socket connection if the pair is offered by the exchange """
+        """Fetch the price from KuCoin."""
 
         # don't monitor the exchange if the pair isn't listed
-        if not self.monitor:
+        if not await self.check_pair_exists():
             return
 
         while True:
@@ -98,20 +87,20 @@ class KuCoin(BaseExchange):
                         api_ws,
                         timeout=self.receive_timeout,
                         receive_timeout=self.receive_timeout,
-                        heartbeat = ping_interval,
+                        heartbeat=ping_interval,
                     )
                     logging.info(
                         f"{self.exchange} Established a websocket connection towards {api_ws}"
                     )
-                    
+
                     await ws.send_str(
                         json.dumps(
                             {
-                                "id" : time.time(),
-                                "type" : "subscribe",
-                                "topic" : f"/market/ticker:{self.pair}",
-                                "privateChannel" : False,
-                                "response" : True
+                                "id": time.time(),
+                                "type": "subscribe",
+                                "topic": f"/market/ticker:{self.pair}",
+                                "privateChannel": False,
+                                "response": True,
                             }
                         )
                     )
@@ -121,9 +110,9 @@ class KuCoin(BaseExchange):
                             logging.debug(f"{self.exchange} {msg}")
                             if "data" in msg:
                                 self.data = {
-                                    "price" : float(msg['data']['price']),
-                                    "time" : datetime.utcfromtimestamp(
-                                        msg['data']['time'] / 1000
+                                    "price": float(msg["data"]["price"]),
+                                    "time": datetime.utcfromtimestamp(
+                                        msg["data"]["time"] / 1000
                                     ).strftime("%Y/%m/%dT%H:%M:%S.%f"),
                                 }
                         except TypeError as e:
@@ -145,16 +134,3 @@ class KuCoin(BaseExchange):
                     logging.exception(e)
                     await asyncio.sleep(1)
                     continue
-
-if __name__ == "__main__":
-
-    async def main():
-        import asyncio
-        kucoin = KuCoin('ETH-USDT', 60, 60)
-
-        kucoin.monitor = await kucoin.check_pair_exists()
-        await kucoin.run()
-
-    asyncio.run(main())
-
-

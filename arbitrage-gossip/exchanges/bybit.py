@@ -11,10 +11,10 @@ from exchanges.base import BaseExchange
 class ByBit(BaseExchange):
     """Implements monitoring for ByBit."""
 
-    """ ByBit http api url. """
+    """ ByBit http api url """
     api: str = "https://api.bybit.com"
 
-    """ Bybit websocket api url. """
+    """ Bybit websocket api url """
     api_ws: str = "wss://stream.bybit.com/spot/quote/ws/v1"
 
     def __init__(
@@ -23,27 +23,11 @@ class ByBit(BaseExchange):
         timeout: float = 10.0,
         receive_timeout: float = 60.0,
     ) -> None:
-
-        """Monitored pair."""
-        self.pair = pair.upper()
-
-        """ Exchange name. """
-        self.exchange = self.__class__.__name__
-
-        """ Websocket connection timeout. """
-        self.timeout: float = timeout
-        self.receive_timeout: float = receive_timeout
-
-        """ Holds all live websocket data. """
-        self.data: dict[str, Any] = {}
-
-        """ If pair isn't offered by exchange =False else =True."""
-        self.monitor: bool
-
+        super().__init__(pair.upper(), timeout, receive_timeout)
         logging.info(f"{self.exchange} Initialized with {self.__dict__}")
 
     async def check_pair_exists(self) -> bool:
-        """Check if a pair is offered by the exchange. Returns bool."""
+        """Check if the pair is offered by ByBit."""
 
         url = f"{self.api}/v2/public/tickers"
         params = {"symbol": self.pair}
@@ -64,10 +48,10 @@ class ByBit(BaseExchange):
                 return False
 
     async def run(self) -> None:
-        """Run an infinite socket connection if the pair is offered by the exchange"""
+        """Fetch the price from ByBit."""
 
-        # don't monitor this exchange if the pair isn't offered
-        if not self.monitor:
+        # don't monitor the exchange if the pair isn't listed
+        if not await self.check_pair_exists():
             return
 
         while True:

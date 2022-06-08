@@ -1,9 +1,11 @@
 import argparse
 import sys
+import os
+import logging
 
 
 def parse_args() -> argparse.Namespace:
-    argsparse = argparse.ArgumentParser("Arbitrage Gossiper - v1.0 Alpha")
+    argsparse = argparse.ArgumentParser("Arbitrage Gossiper")
     argsparse.add_argument(
         "-b",
         "--base",
@@ -58,6 +60,7 @@ def parse_args() -> argparse.Namespace:
     )
     args = argsparse.parse_args()
 
+    # Verify the platforms we report to, currently only twitter is supported
     if args.report_to == "none":
         ...
     else:
@@ -66,7 +69,30 @@ def parse_args() -> argparse.Namespace:
         supported_platforms = ["twitter"]
         for platform in args.report_to:
             if platform not in supported_platforms:
+                sys.stderr.write(f"Invalid --report-to platform: '{platform}'\n")
                 argsparse.print_help()
                 sys.exit(1)
 
+    # Initialize the Logging level.
+    if args.log_level.lower() == "debug":
+        args.log_level = logging.DEBUG
+    elif args.log_level.lower() == "info":
+        args.log_level = logging.INFO
+    elif args.log_level.lower() == "warning":
+        args.log_level = logging.WARNING
+    elif args.log_level.lower() == "error":
+        args.log_level = logging.ERROR
+
+    # Initialize the log directory
+    if not os.path.exists(args.log_dir):
+        try:
+            os.mkdir(args.log_dir)
+        except BaseException as e:
+            sys.stderr.write(e)
+            sys.exit(1)
+
+    # Initialize the log file
+    if not args.log_file:
+        args.log_file = f"{args.base.lower()}{args.quote.lower()}.log"
+    args.log_file = os.path.join(args.log_dir, args.log_file)
     return args

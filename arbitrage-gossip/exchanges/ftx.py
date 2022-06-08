@@ -11,40 +11,24 @@ from exchanges.base import BaseExchange
 class FTX(BaseExchange):
     """Implements monitoring for FTX."""
 
-    """ FTX http api url. """
+    """ FTX http api url """
     api: str = "https://ftx.com/api"
 
-    """ FTX websocket api url. """
+    """ FTX websocket api url """
     api_ws: str = "ws://ftx.com/ws"
 
     def __init__(
         self,
-        pair,
+        pair: str,
         timeout: float = 10.0,
         receive_timeout: float = 60.0,
     ) -> None:
-
-        """Monitored pair."""
-        self.pair = pair.upper()
-
-        """ Exchange name. """
-        self.exchange = self.__class__.__name__
-
-        """ Websocket conenction timeout. """
-        self.timeout: float = timeout
-        self.receive_timeout: float = receive_timeout
-
-        """ Holds all live websocket data. """
-        self.data: dict[str, Any] = {}
-
-        """ If pair isn't offered by exchange =False else =True """
-        self.monitor: bool
-
+        super().__init__(pair.upper(), timeout, receive_timeout)
         logging.info(f"{self.exchange} Initialized with {self.__dict__}")
 
     # should always be called before self.run()
     async def check_pair_exists(self) -> bool:
-        """Check if a pair is offered by the exchange. Returns bool."""
+        """Check if the pair is listed by FTX."""
 
         url = f"{self.api}/markets/{self.pair}"
 
@@ -63,10 +47,10 @@ class FTX(BaseExchange):
                 return False
 
     async def run(self) -> None:
-        """Run an infinite socket connection if the pair is offered by the exchange."""
+        """Fetch the price from FTX."""
 
-        # don't monitor this exchange if the pair isn't offered
-        if not self.monitor:
+        # don't monitor the exchange if the pair isn't listed
+        if not await self.check_pair_exists():
             return
 
         while True:

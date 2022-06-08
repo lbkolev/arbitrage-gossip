@@ -1,28 +1,31 @@
-#!/usr/bin/python
-
 import asyncio
-import sys, os
+import sys
+import os
 import logging
 import dotenv
 from datetime import datetime
 from typing import Any
 
 # custom
-from utils.signal import Signal
 from utils.parser import parse_args
+from exchanges.base import BaseExchange
 from exchanges.binance import Binance
 from exchanges.ftx import FTX
 from exchanges.bybit import ByBit
 from exchanges.huobi import Huobi
 from exchanges.kucoin import KuCoin
-import prices
+
+from platforms.base import BasePlatform
+from platforms.twitter import Twitter
+
+from calculateandnotify import CalculateAndNotify
 
 
 async def main() -> None:
     """Initialize each exchange's infinite loop."""
 
     # initialize each exchange's class
-    exchanges: dict[str, Any] = {
+    exchanges: dict[str, BaseExchange] = {
         "binance": Binance(pair["merged"]),
         "ftx": FTX(pair["/"]),
         "bybit": ByBit(pair["merged"]),
@@ -30,13 +33,14 @@ async def main() -> None:
         "kucoin": KuCoin(pair["-"]),
     }
 
-    # Check if the pair is offered by the exchange
-    # if it isn't, run() will return right after getting called from asyncio.gather()
-    exchanges["binance"].monitor = await exchanges["binance"].check_pair_exists()
-    exchanges["ftx"].monitor = await exchanges["ftx"].check_pair_exists()
-    exchanges["bybit"].monitor = await exchanges["bybit"].check_pair_exists()
-    exchanges["huobi"].monitor = await exchanges["huobi"].check_pair_exists()
-    exchanges["kucoin"].monitor = await exchanges["kucoin"].check_pair_exists()
+    # initialize each platform's class
+    platforms: dict[str, BasePlatform] = {
+        "twitter": Twitter(args.cooldown),
+    }
+
+    calculate_and_notify = CalculateAndNotify(
+        pair=pair, exchanges=exchanges, platforms=platforms, threshold=args.threshold
+    )
 
     await asyncio.gather(
         exchanges["binance"].run(),
@@ -44,7 +48,7 @@ async def main() -> None:
         exchanges["bybit"].run(),
         exchanges["huobi"].run(),
         exchanges["kucoin"].run(),
-        prices.run(exchanges, pair, args.threshold, args.report_to, args.cooldown),
+        calculate_and_notify.run(),
     )
 
 
@@ -58,6 +62,7 @@ if __name__ == "__main__":
     # load the configuration file
     dotenv.load_dotenv(PROGRAM_DIR + ".env")
 
+    # parse & validate the arguments
     args = parse_args()
 
     # Different exchanges use different notations, for example
@@ -70,56 +75,30 @@ if __name__ == "__main__":
         "merged": f"{args.base}{args.quote}",
     }
 
-    # Initialize Signal Handling.
-    signal = Signal()
-    signal.handle_signals()
-
-    # Initialize the Logging level.
-    if args.log_level.lower() == "debug":
-        level = logging.DEBUG
-    elif args.log_level.lower() == "info":
-        level = logging.INFO
-    elif args.log_level.lower() == "warning":
-        level = logging.WARNING
-    elif args.log_level.lower() == "error":
-        level = logging.ERROR
-
-    if not args.log_file:
-        args.log_file = f"{pair['merged'].lower()}.log"
-
-    if not os.path.exists(args.log_dir):
-        try:
-            os.mkdir(args.log_dir)
-        except BaseException as e:
-            print(e)
-            sys.exit(1)
-
     logging.basicConfig(
-        level=level,
+        level=args.log_level,
         format="%(asctime)s %(levelname)s %(message)s",
         datefmt="%Y/%m/%dT%H:%M:%S",
         handlers=[
-            logging.FileHandler(f"{args.log_dir}/{args.log_file}"),
+            logging.FileHandler(f"{args.log_file}"),
             logging.StreamHandler(),
         ],
     )
 
     logging.info(f'STARTING. CMD: {" ".join(sys.argv)}')
-    time_start = datetime.now()
+    start = datetime.now()
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, asyncio.exceptions.CancelledError) as e:
-        logging.warning("Program Interrupted.. Shutting down.")
+        logging.warning("Program Interrupted. Shutting down.")
     except BaseException as e:
         logging.exception(e)
     finally:
-        time_end: datetime = datetime.now()
-
-        time_ran: dict = {}
-        time_ran["days"] = (time_end - time_start).days
-        time_ran["hours"], rem = divmod((time_end - time_start).seconds, 3600)
-        time_ran["minutes"], time_ran["seconds"] = divmod(rem, 60)
-
+        end = datetime.now()
+        ran = {}
+        ran["days"] = (end - start).days
+        ran["hours"], rem = divmod((end - start).seconds, 3600)
+        ran["minutes"], ran["seconds"] = divmod(rem, 60)
         logging.info(
-            f"PROGRAM RAN FOR {time_ran['days']} days {time_ran['hours']} hours {time_ran['minutes']} minutes and {time_ran['seconds']} seconds"
+            f"PROGRAM RAN FOR {ran['days']} days {ran['hours']} hours {ran['minutes']} minutes and {ran['seconds']} seconds"
         )

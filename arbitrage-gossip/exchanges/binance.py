@@ -1,7 +1,6 @@
 import logging
 import aiohttp
 import asyncio.exceptions
-import json
 from datetime import datetime
 from typing import Any
 
@@ -11,11 +10,11 @@ from exchanges.base import BaseExchange
 class Binance(BaseExchange):
     """Implements monitoring for Binance."""
 
-    """ Binance http api url. """
-    api: str = "https://api.binance.com"
+    """ Binance http api url """
+    api = "https://api.binance.com"
 
-    """ Binance websocket api url. """
-    api_ws: str = "wss://stream.binance.com:9443/ws"
+    """ Binance websocket api url """
+    api_ws = "wss://stream.binance.com:9443/ws"
 
     def __init__(
         self,
@@ -23,27 +22,11 @@ class Binance(BaseExchange):
         timeout: float = 10.0,
         receive_timeout: float = 60.0,
     ) -> None:
-
-        """Monitored pair."""
-        self.pair: str = pair.lower()
-
-        """ Exchange name. """
-        self.exchange = self.__class__.__name__
-
-        """ Websocket connection timeout. """
-        self.timeout: float = timeout
-        self.receive_timeout: float = receive_timeout
-
-        """ Holds all live websocket data. """
-        self.data: dict[str, Any] = {}
-
-        """ If the pair isn't offered by exchange =False else =True. """
-        self.monitor: bool
-
+        super().__init__(pair.lower(), timeout, receive_timeout)
         logging.info(f"{self.exchange} Initialized with {self.__dict__}")
 
     async def check_pair_exists(self) -> bool:
-        """Check if a pair is offered by the exchange. Returns bool."""
+        """Check if the pair is offered by Binance."""
 
         url = f"{self.api}/api/v3/exchangeInfo"
         params = {"symbol": self.pair.upper()}
@@ -68,10 +51,10 @@ class Binance(BaseExchange):
                 return False
 
     async def run(self) -> None:
-        """Run an infinite socket connection if the pair is offered by the exchange."""
+        """Fetch the price from Binance."""
 
         # don't monitor the exchange if the pair isn't listed
-        if not self.monitor:
+        if not await self.check_pair_exists():
             return
 
         url = f"{self.api_ws}/{self.pair}@miniTicker"
