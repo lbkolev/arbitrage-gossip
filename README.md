@@ -33,7 +33,7 @@ Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex1((Binance))
 Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex2((FTX))
 Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex3((Bybit))
 Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex4((Huobi))
-Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex5((Huobi))
+Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex5((KuCoin))
 Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex6((Exchange *N*))
 Arb((Arbitrage-gossip)) -- Whenever price difference Z occurs, report it --> F[Twitter]
 ```
