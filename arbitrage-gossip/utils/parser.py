@@ -35,8 +35,8 @@ def parse_args() -> argparse.Namespace:
     argsparse.add_argument(
         "--log-dir",
         type=str,
-        help="Log directory. Defaults to /var/log/arbitrager/",
-        default="/var/log/arbitrager",
+        help="Log directory. Defaults to /var/log/arbitrage-gossip/",
+        default="/var/log/arbitrage-gossip",
     )
     argsparse.add_argument(
         "--log-file",

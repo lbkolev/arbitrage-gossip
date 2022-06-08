@@ -5,8 +5,6 @@ logging.getLogger()
 
 
 class Signal:
-    """Signal handling for the program."""
-
     def __init__(self):
         ...
 

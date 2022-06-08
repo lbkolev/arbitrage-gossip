@@ -14,6 +14,7 @@ from exchanges.binance import Binance
 from exchanges.ftx import FTX
 from exchanges.bybit import ByBit
 from exchanges.huobi import Huobi
+from exchanges.kucoin import KuCoin
 import prices
 
 
@@ -26,6 +27,7 @@ async def main() -> None:
         "ftx": FTX(pair["/"]),
         "bybit": ByBit(pair["merged"]),
         "huobi": Huobi(pair["merged"]),
+        "kucoin": KuCoin(pair["-"]),
     }
 
     # Check if the pair is offered by the exchange
@@ -34,12 +36,14 @@ async def main() -> None:
     exchanges["ftx"].monitor = await exchanges["ftx"].check_pair_exists()
     exchanges["bybit"].monitor = await exchanges["bybit"].check_pair_exists()
     exchanges["huobi"].monitor = await exchanges["huobi"].check_pair_exists()
+    exchanges["kucoin"].monitor = await exchanges["kucoin"].check_pair_exists()
 
     await asyncio.gather(
         exchanges["binance"].run(),
         exchanges["ftx"].run(),
         exchanges["bybit"].run(),
         exchanges["huobi"].run(),
+        exchanges["kucoin"].run(),
         prices.run(exchanges, pair, args.threshold, args.report_to, args.cooldown),
     )
 

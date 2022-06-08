@@ -37,7 +37,7 @@ class Huobi(BaseExchange):
         self.data: dict[str, Any] = {}
 
         """ If pair isn't offered by exchange =False else =True."""
-        self.monitor = False
+        self.monitor: bool
 
         logging.info(f"{self.exchange} Initialized with {self.__dict__}")
 

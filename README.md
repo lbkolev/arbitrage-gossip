@@ -10,6 +10,7 @@ Monitor cryptocurrency exchanges and alert on different platforms whenever a  pr
 * FTX
 * ByBit
 * Huobi
+* KuCoin
 #### Supported platforms for sending notification:
 * Twitter
 ##
@@ -24,15 +25,16 @@ https://twitter.com/voices89394387
 
 
 ## Explained
-Arbitrage-gossip is a bot that asynchronously fetches the prices from 4(for now) centralized cryptocurrency exchanges for a certain pair *pair* and reports  to twitter when big enough price difference *N* occurs between the exchanges, given that you have twitter api access, else it only logs the information to the server.
+Arbitrage-gossip is a bot that asynchronously fetches the prices from 5(for now) centralized cryptocurrency exchanges for a certain pair *pair* and reports to twitter when big enough price difference *Z* occurs between the exchanges, given that you have twitter api access, else it only logs the information to the server.
 
 ```mermaid
 graph LR
-Arb((Arbitrage-gossip)) -- Async Websocket connection --> A((Binance))
-Arb((Arbitrage-gossip)) -- Async Websocket connection --> B((FTX))
-Arb((Arbitrage-gossip)) -- Async Websocket connection --> C((Bybit))
-Arb((Arbitrage-gossip)) -- Async Websocket connection --> D((Huobi))
-Arb((Arbitrage-gossip)) -- Async Websocket connection --> E((Exchange *N*))
+Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex1((Binance))
+Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex2((FTX))
+Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex3((Bybit))
+Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex4((Huobi))
+Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex5((Huobi))
+Arb((Arbitrage-gossip)) -- Async Websocket connection --> Ex6((Exchange *N*))
 Arb((Arbitrage-gossip)) -- Whenever price difference Z occurs, report it --> F[Twitter]
 ```
 ##
@@ -106,7 +108,7 @@ $ python arbitrage-gossip/main.py --base cake --quote dai --log-level=error --lo
 ```
 ## Troubleshooting
 The program supports 4 levels of logging, in ascending order - *debug*, *info*, *warning* and *error*, as per the python's [logging library](https://docs.python.org/3/library/logging.html).  
-Use debug if you want to drown in information.  
-Info is the default level, outputs everything necessary(recommended).  
-Warning and Error log only warnings and errors respectively :).  
-Generally everything important should be logged, so that reading the log should generally help you resolve any troubles.
+1. Use debug if you want to drown in information.  
+2. Info is the default level, outputs everything necessary(recommended).  
+3. Warning and Error log only warnings and errors respectively :).  
+Generally everything important is logged by default(info level), so that reading the log should give you a good idea of what the issue is.

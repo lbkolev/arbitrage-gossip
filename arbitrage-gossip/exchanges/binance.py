@@ -38,7 +38,7 @@ class Binance(BaseExchange):
         self.data: dict[str, Any] = {}
 
         """ If the pair isn't offered by exchange =False else =True. """
-        self.monitor = True
+        self.monitor: bool
 
         logging.info(f"{self.exchange} Initialized with {self.__dict__}")
 
@@ -70,7 +70,7 @@ class Binance(BaseExchange):
     async def run(self) -> None:
         """Run an infinite socket connection if the pair is offered by the exchange."""
 
-        # don't monitor this exchange if the pair isn't offered
+        # don't monitor the exchange if the pair isn't listed
         if not self.monitor:
             return
 
