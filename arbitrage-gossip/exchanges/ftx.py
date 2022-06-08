@@ -50,7 +50,7 @@ class FTX(BaseExchange):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
-                logging.info({"{self.exchange} check_pair_exists response": resp})
+                logging.debug({"{self.exchange} check_pair_exists response": resp})
                 if resp.status == 200:
                     logging.info(
                         f'{self.exchange} pair "{self.pair}" is offered. MONITORING {self.exchange}'

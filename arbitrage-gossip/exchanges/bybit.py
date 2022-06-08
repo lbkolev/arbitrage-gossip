@@ -50,7 +50,7 @@ class ByBit(BaseExchange):
 
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as resp:
-                logging.info({"{self.exchange} check_pair_exists response": resp})
+                logging.debug({"{self.exchange} check_pair_exists response": resp})
                 resp = await resp.json()
                 if resp["ret_code"] == 0:
                     logging.info(

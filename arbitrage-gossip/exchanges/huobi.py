@@ -47,7 +47,7 @@ class Huobi(BaseExchange):
         url: str = f"{self.api}/v2/settings/common/symbols/"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
-                logging.info({"{self.exchange} check_pair_exists response": resp})
+                logging.debug({"{self.exchange} check_pair_exists response": resp})
                 resp = await resp.json()
                 for symbol in resp["data"]:
                     if symbol["sc"] == self.pair and symbol["state"] == "online":

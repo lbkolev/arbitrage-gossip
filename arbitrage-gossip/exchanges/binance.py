@@ -51,7 +51,7 @@ class Binance(BaseExchange):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as resp:
                 if resp.status == 200:
-                    logging.info({"{self.exchange} check_pair_exists response": resp})
+                    logging.debug({"{self.exchange} check_pair_exists response": resp})
                     resp = await resp.json()
                     if (
                         resp["symbols"][0]["symbol"] == self.pair.upper()

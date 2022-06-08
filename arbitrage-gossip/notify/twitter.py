@@ -16,6 +16,15 @@ class Twitter(BaseNotify):
         """Report every cooldown seconds."""
         self.cooldown = cooldown
 
+        """Number of retries to attempt when an api connection error occurs."""
+        self.retry_count = 5
+
+        """Number of seconds to wait between retries."""
+        self.retry_delay = 2
+
+        """ The platform's name."""
+        self.platform = self.__class__.__name__
+
         # Get the env. variables
         self.api_key = os.environ["TWITTER_API_KEY"]
         self.api_secret_key = os.environ["TWITTER_API_SECRET_KEY"]
@@ -23,14 +32,29 @@ class Twitter(BaseNotify):
         self.api_token_secret = os.environ["TWITTER_TOKEN_SECRET"]
         logging.getLogger()
 
-    async def notify(self, pair, prices) -> bool:
+        self.conn = self.authorize()
+
+
+    def authorize(self):
+        """authorize with the twitter API."""
+
         ### Authorization protocol
-        auth = tweepy.OAuthHandler(self.api_key, self.api_secret_key)
-        auth.set_access_token(self.api_access_token, self.api_token_secret)
+        auth = tweepy.OAuth1UserHandler(consumer_key=self.api_key,
+            consumer_secret=self.api_secret_key,
+            access_token=self.api_access_token,
+            access_token_secret=self.api_token_secret)
 
         ### Providing access to API
-        API = tweepy.API(auth)
+        try: 
+            conn = tweepy.API(auth)
+            logging.info('Established connection with twitter.')
+            return conn
+        except BaseException as e:
+            logging.error(e)
+            return False
 
+
+    async def notify(self, pair, prices) -> bool:
         tweet = f"""🏃🏃🏃🏃🏃
 PAIR: #{pair['merged'].upper()}\n
 Exchange with lowest price(#{prices['min']['exchange']}):  {prices['min']['price']}
@@ -40,16 +64,15 @@ Price Difference In %: {prices['price_diff_perc']}
 🏃🏃🏃🏃🏃
 
 
-#cryptocurrencies #crypto #cryptotrading #arbitrager #cryptoarbitrager
+#cryptocurrencies #crypto #trading #arbitrager #bot
 """
         try:
             ### Tweeting to the linked twitter account
-            API.update_status(tweet)
+            self.conn.update_status(tweet)
             logging.info(
                 f"Notified Twitter App with the following data:\nHighest: {prices['max']}\nLowest:{[prices['min']]}"
             )
             self.last_reported = time.time()
             return True
         except tweepy.errors.TweepyException as e:
-            logging.error(e)
-        return False
+            logging.error(f"{self.platform} {str(e)}")
