@@ -4,6 +4,7 @@ import os
 
 from platforms.twitter import Twitter
 
+
 class TestPlatforms(unittest.IsolatedAsyncioTestCase):
     async def test_twitter_connectivity(self):
         dotenv.load_dotenv(os.path.dirname(os.path.realpath(__file__)) + "/../../.env")

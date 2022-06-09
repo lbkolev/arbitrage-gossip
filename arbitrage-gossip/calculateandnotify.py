@@ -63,14 +63,14 @@ class CalculateAndNotify:
         while True:
             if exchange_min != exchange_max:
                 break
-            elif (exchange_min == exchange_max) and (len(exchanges_prices) == 1):
+            elif (exchange_min == exchange_max) and (len(self.exchanges_prices) == 1):
                 break
-            elif (exchange_min == exchange_max) and (len(exchanges_prices) > 1):
-                tmp = list(exchanges_prices.items())
+            elif (exchange_min == exchange_max) and (len(self.exchanges_prices) > 1):
+                tmp = list(self.exchanges_prices.items())
                 random.shuffle(tmp)
-                exchanges_prices = dict(tmp)
+                self.exchanges_prices = dict(tmp)
 
-                exchange_min = min(exchanges_prices, key=exchanges_prices.get)
+                exchange_min = min(self.exchanges_prices, key=self.exchanges_prices.get)
                 if exchange_min == exchange_max:
                     continue
                 else:
