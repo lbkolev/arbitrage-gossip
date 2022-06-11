@@ -21,8 +21,6 @@ from platforms.twitter import Twitter
 
 from calculate import Calculate
 from notify import Notify
-from calculateandnotify import CalculateAndNotify
-
 
 async def main() -> None:
     """Initialize each exchange's infinite loop."""
