@@ -35,15 +35,9 @@ def parse_args() -> argparse.Namespace:
         choices=["debug", "info", "warning", "error"],
     )
     argsparse.add_argument(
-        "--log-dir",
-        type=str,
-        help="Log directory. Defaults to /var/log/arbitrage-gossip/",
-        default="/var/log/arbitrage-gossip",
-    )
-    argsparse.add_argument(
         "--log-file",
         type=str,
-        help="Specify a filename to log into. Defaults to {pair}.log",
+        help="Specify a filename to log into. Defaults to {pair}.log. Log directory is by default /var/log/arbitrage-gossip",
         default="",
     )
     argsparse.add_argument(
@@ -83,16 +77,7 @@ def parse_args() -> argparse.Namespace:
     elif args.log_level.lower() == "error":
         args.log_level = logging.ERROR
 
-    # Initialize the log directory
-    if not os.path.exists(args.log_dir):
-        try:
-            os.mkdir(args.log_dir)
-        except BaseException as e:
-            sys.stderr.write(e)
-            sys.exit(1)
-
     # Initialize the log file
     if not args.log_file:
-        args.log_file = f"{args.base.lower()}{args.quote.lower()}.log"
-    args.log_file = os.path.join(args.log_dir, args.log_file)
+        args.log_file = os.path.join('/var/log/arbitrage-gossip', f"{args.base.lower()}{args.quote.lower()}.log")
     return args

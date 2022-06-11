@@ -14,6 +14,7 @@ from exchanges.ftx import FTX
 from exchanges.bybit import ByBit
 from exchanges.huobi import Huobi
 from exchanges.kucoin import KuCoin
+from exchanges.bitfinex import Bitfinex
 
 from platforms.base import BasePlatform
 from platforms.twitter import Twitter
@@ -31,12 +32,14 @@ async def main() -> None:
         "bybit": ByBit(pair["merged"]),
         "huobi": Huobi(pair["merged"]),
         "kucoin": KuCoin(pair["-"]),
+        "bitfinex": Bitfinex(pair["-"]),
     }
 
     # initialize each platform's class
-    platforms: dict[str, BasePlatform] = {
-        "twitter": Twitter(args.cooldown),
-    }
+    platforms: dict[str, BasePlatform] = {}
+
+    if "twitter" in args.report_to:
+        platforms["twitter"] =  Twitter(args.cooldown)
 
     calculate_and_notify = CalculateAndNotify(
         pair=pair, exchanges=exchanges, platforms=platforms, threshold=args.threshold
@@ -48,6 +51,7 @@ async def main() -> None:
         exchanges["bybit"].run(),
         exchanges["huobi"].run(),
         exchanges["kucoin"].run(),
+        exchanges["bitfinex"].run(),
         calculate_and_notify.run(),
     )
 

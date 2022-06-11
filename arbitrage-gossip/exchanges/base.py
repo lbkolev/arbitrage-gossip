@@ -5,34 +5,32 @@ from typing import Any
 class BaseExchange(ABC):
     """Abstract class representing mandatory methods.
 
-    Abstract class representing all the methods that
+    Abstract class representing all the methods - both public and private - that
     have to be implemented by each monitored exchange(subclass).
     """
 
-    def __init__(
-        self, pair: str, timeout: float = 10.0, receive_timeout: float = 60.0
-    ) -> None:
+    def __init__(self, pair: str) -> None:
         """Monitored pair"""
         self.pair = pair
 
         """ Exchange name """
         self.exchange = self.__class__.__name__
 
-        """ Websocket connection timeout in seconds """
-        self.timeout = timeout
-        self.receive_timeout = receive_timeout
-
-        """ Holds the latest price and timestamp fetched from the websocket
+        """ Holds the latest price fetched from the websocket and date in the format %Y/%m/%dT%H:%M:%S.%f" 
         self.data = {
             "price" : price,
-            "time" : timestamp
+            "time"  : date
             }
         """
         self.data: dict[str, Any] = {}
 
     @abstractmethod
-    async def check_pair_exists(self) -> bool:
+    async def _check_pair_exists(self) -> bool:
         """Check if a pair is listed by the exchange."""
+        ...
+
+    async def _subscribe(self) -> bool:
+        """Subscribe to a given websocket channel."""
         ...
 
     @abstractmethod
