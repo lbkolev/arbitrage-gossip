@@ -41,7 +41,7 @@ class FTX(BaseExchange):
                 )
                 return False
 
-    async def _subscribe(self, ws) -> bool: 
+    async def _subscribe(self, ws) -> bool:
         await ws.send_str(
             json.dumps(
                 {
@@ -56,8 +56,8 @@ class FTX(BaseExchange):
         # error looks like {'type': 'error', 'code': 404, 'msg': 'No such market: BTCUSDT'}
         # success looks like {'type': 'subscribed', 'channel': 'ticker', 'market': 'BTC/USDT'}
         resp = await ws.receive_json()
-        if resp['type'] == 'subscribed':
-            log.info(f"{self.exchange} Subscribed to {self.pair}")
+        if resp["type"] == "subscribed":
+            log.debug(f"{self.exchange} Subscribed to {self.pair}")
             return True
 
         log.warning(f"{self.exchange} Unable to subscribe {resp}")
@@ -71,11 +71,11 @@ class FTX(BaseExchange):
             return
 
         async with aiohttp.ClientSession() as session:
-            log.info(f"{self.exchange} Created new client session.")
+            log.debug(f"{self.exchange} Created new client session.")
             while True:
                 try:
                     ws = await session.ws_connect(self.api_ws)
-                    log.info(
+                    log.debug(
                         f"{self.exchange} Established a websocket connection towards {self.api_ws}"
                     )
 
@@ -86,17 +86,17 @@ class FTX(BaseExchange):
                         try:
                             msg = await ws.receive_json()
                             log.debug(f"{self.exchange} {msg}")
-                            
-                            # example response
+
+                            # example response:
                             # {'channel': 'ticker', 'market': 'BTC/USDT', 'type': 'update', 'data': {'bid': 29310.0, 'ask': 29311.0, 'bidSize': 0.7335, 'askSize': 0.2153, 'last': 29310.0, 'time': 1654929638.6974728}}
                             self.data = {
-                                "price": float(msg['data']['last']),
+                                "price": float(msg["data"]["last"]),
                                 "time": datetime.utcfromtimestamp(
                                     msg["data"]["time"]
                                 ).strftime("%Y/%m/%dT%H:%M:%S.%f"),
                             }
                         except (TypeError, asyncio.exceptions.TimeoutError) as e:
-                            log.exception(e)
+                            log.debug(str(e))
                             break
                         except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
                             log.warning(
@@ -105,4 +105,5 @@ class FTX(BaseExchange):
                             return
                 except BaseException as e:
                     log.exception(e)
-                    return
+                    await asyncio.sleep(0.3)
+                    continue

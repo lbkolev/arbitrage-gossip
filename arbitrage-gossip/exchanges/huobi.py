@@ -41,13 +41,7 @@ class Huobi(BaseExchange):
                 return False
 
     async def _subscribe(self, ws):
-        await ws.send_str(
-            json.dumps(
-                {
-                "sub": f"market.{self.pair}.ticker"
-                }
-            )
-        )
+        await ws.send_str(json.dumps({"sub": f"market.{self.pair}.ticker"}))
 
         # huobi sometimes returns {'ping': 1654931160555} as first response, so we have to try and filter
         # example for fail {'status': 'error', 'ts': 1654930506284, 'err-code': 'bad-request', 'err-msg': 'invalid symbol btcusd'}
@@ -56,17 +50,16 @@ class Huobi(BaseExchange):
         resp = json.loads(gzip.decompress(raw_resp).decode())
 
         # if {'ping': <ts>} is the response, try again
-        if 'ping' in resp.keys():
+        if "ping" in resp.keys():
             raw_resp = await ws.receive_bytes()
             resp = json.loads(gzip.decompress(raw_resp).decode())
 
-        if resp['status'] == 'ok':
-            log.info(f"{self.exchange} Subscribed to {self.pair}")
+        if resp["status"] == "ok":
+            log.debug(f"{self.exchange} Subscribed to {self.pair}")
             return True
 
         log.warning(f"{self.exchange} Unable to Subscribe {resp}")
         return False
-
 
     async def run(self) -> None:
         """Fetch the price from Huobi."""
@@ -79,24 +72,24 @@ class Huobi(BaseExchange):
             while True:
                 try:
                     ws = await session.ws_connect(self.api_ws)
-                    #log.info(
-                    #    f"{self.exchange} Created new Client session and Established a websocket connection towards {self.api_ws}"
-                    #)
+                    log.debug(
+                        f"{self.exchange} Created new Client session and Established a websocket connection towards {self.api_ws}"
+                    )
 
                     if not await self._subscribe(ws):
                         return
                     while True:
-                        #https://huobiapi.github.io/docs/spot/v1/en/#q4-why-the-websocket-is-often-disconnected
-                        #Q4：Why the WebSocket is often disconnected?
-                        #Please check below possible reasons:
+                        # https://huobiapi.github.io/docs/spot/v1/en/#q4-why-the-websocket-is-often-disconnected
+                        # Q4：Why the WebSocket is often disconnected?
+                        # Please check below possible reasons:
 
-                        #The client didn't respond 'Pong'. It is requird to respond 'Pong' after receive 'Ping' from server.
-                        #The server didn't receive 'Pong' successfully due to network issue.
-                        #The connection is broken due to network issue.
-                        #It is suggested to implement WebSocket re-connect mechanism. If Ping/Pong works well but the connection is broken, the application should be able to re-connect automatically.
-                        
+                        # The client didn't respond 'Pong'. It is requird to respond 'Pong' after receive 'Ping' from server.
+                        # The server didn't receive 'Pong' successfully due to network issue.
+                        # The connection is broken due to network issue.
+                        # It is suggested to implement WebSocket re-connect mechanism. If Ping/Pong works well but the connection is broken, the application should be able to re-connect automatically.
+
                         # The aiohttp ws connection should send a pong response to each received ping, yet we get disconnected every 5 seconds or so, so we restart the connection
-                        
+
                         # example responses:
                         # {'ch': 'market.btcusdt.ticker', 'ts': 1654932129289, 'tick': {'open': 30082.59, 'high': 30186.19, 'low': 28841.12, 'close': 29342.99, 'amount': 16438.237897971736, 'vol': 483399849.8806693, 'count': 521649, 'bid': 29342.98, 'bidSize': 6.133091, 'ask': 29342.99, 'askSize': 2.129672, 'lastPrice': 29342.99, 'lastSize': 0.00737}}
                         # {'ping': 1654932128921}
@@ -113,10 +106,8 @@ class Huobi(BaseExchange):
                                     ).strftime("%Y/%m/%dT%H:%M:%S.%f"),
                                 }
                         # Huobi disconnects & reconnects every few seconds, so we dont flood the log
-                        except TypeError:
-                            break
                         except (asyncio.exceptions.TimeoutError) as e:
-                            log.exception(e)
+                            log.debug(str(e))
                             break
                         except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
                             log.warning(
@@ -125,4 +116,5 @@ class Huobi(BaseExchange):
                             return
                 except BaseException as e:
                     log.exception(e)
-                    return
+                    await asyncio.sleep(0.3)
+                    continue

@@ -57,7 +57,7 @@ class Binance(BaseExchange):
                 try:
                     ws = await session.ws_connect(url)
 
-                    log.info(
+                    log.debug(
                         f"{self.exchange} Created new Client session and Established a websocket connection towards {self.api_ws}"
                     )
 
@@ -66,7 +66,7 @@ class Binance(BaseExchange):
                             msg = await ws.receive_json()
                             log.debug(f"{self.exchange} {msg}")
 
-                            # example response
+                            # example response:
                             # {"e":"24hrMiniTicker","E":1654932552785,"s":"BTCUSDT","c":"29313.50000000","o":"30088.62000000","h":"30184.40000000","l":"28850.00000000","v":"64257.42829000","q":"1891748550.51386060"}
                             self.data = {
                                 "price": float(msg["c"]),
@@ -75,7 +75,7 @@ class Binance(BaseExchange):
                                 ).strftime("%Y/%m/%dT%H:%M:%S.%f"),
                             }
                         except (TypeError, asyncio.exceptions.TimeoutError) as e:
-                            log.exception(e)
+                            log.debug(str(e))
                             break
                         except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
                             log.warning(
@@ -84,4 +84,5 @@ class Binance(BaseExchange):
                             return
                 except BaseException as e:
                     log.exception(e)
-                    return
+                    await asyncio.sleep(0.3)
+                    continue

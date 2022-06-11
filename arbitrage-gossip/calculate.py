@@ -1,10 +1,14 @@
 import random
+import logging as log
+import os
+import signal
 from typing import Any
 
 from exchanges.base import BaseExchange
 
+
 class Calculate:
-    """"Calculate the price differences between the exchanges."""
+    """ "Calculate the price differences between the exchanges."""
 
     def __init__(self, exchanges: dict[str, BaseExchange]) -> None:
         """All implemented exchanges"""
@@ -16,7 +20,7 @@ class Calculate:
 
     async def percentage_change(self, x, y) -> float:
         """Get the percentage change between two values."""
-        return (x-y)*100/y
+        return (x - y) * 100 / y
 
     async def latest_prices(self) -> Any:
         """Get the latest prices from all the exchanges."""
@@ -41,8 +45,12 @@ class Calculate:
         while True:
             if exchange_min != exchange_max:
                 break
-            elif (exchange_min == exchange_max) and (len(self.exchanges_prices) == 1):
-                break
+            elif len(self.exchanges_prices) == 1:
+                log.error(
+                    f"Only {self.exchanges_prices} is offering this pair. Aborting the program."
+                )
+                os.kill(os.getpid(), signal.SIGINT)
+
             elif (exchange_min == exchange_max) and (len(self.exchanges_prices) > 1):
                 tmp = list(self.exchanges_prices.items())
                 random.shuffle(tmp)

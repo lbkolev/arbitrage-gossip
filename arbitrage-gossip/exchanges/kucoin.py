@@ -62,8 +62,8 @@ class KuCoin(BaseExchange):
         # second response failure {'id': '1654933524.5110245', 'type': 'error', 'code': 404, 'data': 'topic /market/ticker:BTC-USD is not found'}
         await ws.receive_json()
         resp = await ws.receive_json()
-        if resp['type'] == 'ack':
-            log.info(f"{self.exchange} Subscribed to {self.pair}")
+        if resp["type"] == "ack":
+            log.debug(f"{self.exchange} Subscribed to {self.pair}")
             return True
 
         log.warning(f"{self.exchange} Unable to subscribe {resp}")
@@ -82,9 +82,7 @@ class KuCoin(BaseExchange):
                     api_ws = resp["data"]["instanceServers"][0]["endpoint"]
                     token = resp["data"]["token"]
 
-                    log.debug(
-                        f"{self.exchange} Kucoin ws url: {api_ws}?token={token}"
-                    )
+                    log.debug(f"{self.exchange} Kucoin ws url: {api_ws}?token={token}")
 
                     return f"{api_ws}?token={token}"
 
@@ -101,20 +99,20 @@ class KuCoin(BaseExchange):
             return
 
         async with aiohttp.ClientSession() as session:
-            log.info(f"{self.exchange} Created new client session.")
+            log.debug(f"{self.exchange} Created new client session.")
             while True:
                 api_ws = await self._get_api_ws_and_token()
 
                 try:
                     ws = await session.ws_connect(api_ws)
-                    log.info(
+                    log.debug(
                         f"{self.exchange} Established a websocket connection towards {api_ws}"
                     )
                     if not await self._subscribe(ws):
                         return
                     while True:
                         try:
-                            #example response:
+                            # example response:
                             # {'type': 'message', 'topic': '/market/ticker:ETH-USDT', 'subject': 'trade.ticker', 'data': {'bestAsk': '1669.15', 'bestAskSize': '16.0276667', 'bestBid': '1669.14', 'bestBidSize': '5.1395149', 'price': '1669.15', 'sequence': '1629182000135', 'size': '0.0017103', 'time': 1654934466343}}
                             msg = await ws.receive_json()
                             log.debug(f"{self.exchange} {msg}")
@@ -125,7 +123,7 @@ class KuCoin(BaseExchange):
                                 ).strftime("%Y/%m/%dT%H:%M:%S.%f"),
                             }
                         except (TypeError, asyncio.exceptions.TimeoutError) as e:
-                            log.exception(e)
+                            log.debug(str(e))
                             break
                         except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
                             log.warning(
@@ -134,4 +132,5 @@ class KuCoin(BaseExchange):
                             return
                 except BaseException as e:
                     log.exception(e)
-                    return
+                    await asyncio.sleep(0.3)
+                    continue

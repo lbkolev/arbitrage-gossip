@@ -21,11 +21,23 @@ def parse_args() -> argparse.Namespace:
         required=True,
     )
     argsparse.add_argument(
+        "--report-to",
+        type=str,
+        help="Comma separated list of the platforms we'll notify. **For now only twitter is supported**.",
+        default="none",
+    )
+    argsparse.add_argument(
         "-t",
         "--threshold",
         type=float,
         help="The threshold specifies the discrepancy in percentage, after which the information will be reported to --report-to platforms. Defaults to 1 percent.",
         default=1,
+    )
+    argsparse.add_argument(
+        "--cooldown",
+        type=float,
+        help="Report to the platforms every cooldown seconds. Defaults to 60 seconds",
+        default=60.0,
     )
     argsparse.add_argument(
         "--log-level",
@@ -39,18 +51,6 @@ def parse_args() -> argparse.Namespace:
         type=str,
         help="Specify a filename to log into. Defaults to {pair}.log. Log directory is by default /var/log/arbitrage-gossip",
         default="",
-    )
-    argsparse.add_argument(
-        "--report-to",
-        type=str,
-        help="Comma separated list of the platforms we'll notify. **For now only twitter is supported**.",
-        default="none",
-    )
-    argsparse.add_argument(
-        "--cooldown",
-        type=float,
-        help="Report to the platforms every cooldown seconds. Defaults to 60 seconds",
-        default=60.0,
     )
     args = argsparse.parse_args()
 
@@ -79,5 +79,14 @@ def parse_args() -> argparse.Namespace:
 
     # Initialize the log file
     if not args.log_file:
-        args.log_file = os.path.join('/var/log/arbitrage-gossip', f"{args.base.lower()}{args.quote.lower()}.log")
+        default_logdir = "/var/log/arbitrage-gossip"
+        args.log_file = os.path.join(
+            default_logdir, f"{args.base.lower()}{args.quote.lower()}.log"
+        )
+        try:
+            if not os.path.exists(default_logdir):
+                os.mkdir(default_logdir)
+        except BaseException as e:
+            sys.stderr.write(e)
+            sys.exit(1)
     return args

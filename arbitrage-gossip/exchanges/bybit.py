@@ -55,15 +55,15 @@ class ByBit(BaseExchange):
 
         resp = await ws.receive_json()
         # bybit returns code only if there's a problem, else it directly returns the response
-        # examples for fail 
+        # examples for fail
         # {'code': '-100010', 'desc': 'Invalid Symbols!'}
         # {'code': '-10002', 'desc': 'Invalid event!'}
         # example for success {'symbol': 'BTCUSDT', 'symbolName': 'BTCUSDT', 'topic': 'realtimes', 'params': {'realtimeInterval': '24h', 'binary': 'false'}, 'data': [{'t': 1654927909198, 's': 'BTCUSDT', 'sn': 'BTCUSDT', 'c': '29298.76', 'h': '30234.91', 'l': '28855.01', 'o': '30169.02', 'v': '3915.612362', 'qv': '115172990.1827463', 'm': '-0.0288', 'e': 301}], 'f': True, 'sendTime': 1654927911193}
 
         if "code" not in resp:
-            log.info(f"{self.exchange} Subscribed to websocket.")
+            log.debug(f"{self.exchange} Subscribed to websocket.")
             return True
-            
+
         log.warning(f"{self.exchange} Unable to subscribe {resp}")
         return False
 
@@ -75,11 +75,11 @@ class ByBit(BaseExchange):
             return
 
         async with aiohttp.ClientSession() as session:
-            log.info(f"{self.exchange} Created new client session.")
+            log.debug(f"{self.exchange} Created new client session.")
             while True:
                 try:
                     ws = await session.ws_connect(self.api_ws)
-                    log.info(
+                    log.debug(
                         f"{self.exchange} Established a websocket connection towards {self.api_ws}"
                     )
 
@@ -90,7 +90,7 @@ class ByBit(BaseExchange):
                             msg = await ws.receive_json()
                             log.debug(f"{self.exchange} {msg}")
 
-                            # example response
+                            # example response:
                             # {'symbol': 'BTCUSDT', 'symbolName': 'BTCUSDT', 'topic': 'realtimes', 'params': {'realtimeInterval': '24h', 'binary': 'false'}, 'data': [{'t': 1654935180037, 's': 'BTCUSDT', 'sn': 'BTCUSDT', 'c': '29259.04', 'h': '30180.58', 'l': '28855.01', 'o': '30065.01', 'v': '3738.712793', 'qv': '109807074.56801432', 'm': '-0.0268', 'e': 301}], 'f': False, 'sendTime': 1654935180324}
                             self.data = {
                                 "price": float(msg["data"][0]["c"]),
@@ -99,7 +99,7 @@ class ByBit(BaseExchange):
                                 ).strftime("%Y/%m/%dT%H:%M:%S.%f"),
                             }
                         except (TypeError, asyncio.exceptions.TimeoutError) as e:
-                            log.exception(e)
+                            log.debug(str(e))
                             break
                         except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
                             log.warning(
@@ -108,4 +108,5 @@ class ByBit(BaseExchange):
                             return
                 except BaseException as e:
                     log.exception(e)
-                    return
+                    await asyncio.sleep(0.3)
+                    continue

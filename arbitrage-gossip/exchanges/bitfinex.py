@@ -72,7 +72,7 @@ class Bitfinex(BaseExchange):
         await ws.receive_json()
         resp = await ws.receive_json()
         if resp["event"] == "subscribed":
-            log.info(f"{self.exchange} Subscribed to {self.pair}")
+            log.debug(f"{self.exchange} Subscribed to {self.pair}")
             return True
         log.warning(f"{self.exchange} Unable to subscribe {resp}")
         return False
@@ -85,11 +85,11 @@ class Bitfinex(BaseExchange):
 
         while True:
             async with aiohttp.ClientSession() as session:
-                log.info(f"{self.exchange} Created new client session.")
+                log.debug(f"{self.exchange} Created new client session.")
 
                 try:
                     ws = await session.ws_connect(self.api_ws)
-                    log.info(
+                    log.debug(
                         f"{self.exchange} Established a websocket connection towards {self.api_ws}"
                     )
                     if not await self._subscribe(ws):
@@ -110,7 +110,7 @@ class Bitfinex(BaseExchange):
                                     ),
                                 }
                         except (TypeError, asyncio.exceptions.TimeoutError) as e:
-                            log.exception(e)
+                            log.debug(str(e))
                             break
                         except (asyncio.exceptions.CancelledError, KeyboardInterrupt):
                             log.warning(
@@ -119,4 +119,5 @@ class Bitfinex(BaseExchange):
                             return
                 except BaseException as e:
                     log.exception(e)
-                    return
+                    await asyncio.sleep(0.3)
+                    continue

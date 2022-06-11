@@ -22,6 +22,7 @@ from platforms.twitter import Twitter
 from calculate import Calculate
 from notify import Notify
 
+
 async def main() -> None:
     """Initialize each exchange's infinite loop."""
 
@@ -38,13 +39,15 @@ async def main() -> None:
     # initialize each platform's class
     platforms: dict[str, BasePlatform] = {}
     if "twitter" in args.report_to:
-        platforms["twitter"] =  Twitter(args.cooldown)
+        platforms["twitter"] = Twitter(args.cooldown)
 
     # initialize the class calculating the price differences
     calculate: Calculate = Calculate(exchanges=exchanges)
 
     # initialize the class responsible for notifying the platforms
-    notify: Notify = Notify(pair=pair, platforms=platforms, calculate=calculate, threshold=args.threshold)
+    notify: Notify = Notify(
+        pair=pair, platforms=platforms, calculate=calculate, threshold=args.threshold
+    )
 
     await asyncio.gather(
         exchanges["binance"].run(),
