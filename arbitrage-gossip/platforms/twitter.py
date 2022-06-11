@@ -4,6 +4,7 @@ import os
 import sys
 import logging
 import time
+from typing import Any
 
 from platforms.base import BasePlatform
 
@@ -48,7 +49,7 @@ class Twitter(BasePlatform):
             logging.error(e)
             sys.exit(1)
 
-    async def notify(self, pair, prices) -> bool:
+    async def notify(self, pair: str, prices: dict[str, Any]) -> bool:
         """Notify the twitter platform."""
 
         tweet = f"""🏃🏃🏃🏃🏃

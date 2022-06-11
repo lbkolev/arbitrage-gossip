@@ -1,36 +1,14 @@
-import asyncio
-import logging as log
 import random
-import time
-import os
-import signal
 from typing import Any
 
 from exchanges.base import BaseExchange
-from platforms.base import BasePlatform
 
+class Calculate:
+    """"Calculate the price differences between the exchanges."""
 
-class CalculateAndNotify:
-    """Calculate the price differences between the exchanges and notify the platforms."""
-
-    def __init__(
-        self,
-        pair: dict[str, str],
-        exchanges: dict[str, BaseExchange],
-        platforms: dict[str, BasePlatform],
-        threshold: float,
-    ) -> None:
-        """The monitored pair"""
-        self.pair = pair
-
+    def __init__(self, exchanges: dict[str, BaseExchange]) -> None:
         """All implemented exchanges"""
         self.exchanges = exchanges
-
-        """All implemented platforms"""
-        self.platforms = platforms
-
-        """Threshold for the arbitrage monitor"""
-        self.threshold = threshold
 
         """Exchanges prices"""
         self.exchanges_monitor: dict[str, Any] = {}
@@ -89,48 +67,3 @@ class CalculateAndNotify:
                 "time": self.exchanges_monitor[exchange_min]["time"],
             },
         }
-
-    async def run(self):
-        """Run the arbitrage monitor."""
-
-        # give the other concurrent functions time to fetch initial websocket data,
-        # then begin calculating prices & notifying platforms
-        await asyncio.sleep(5)
-
-        prices = await self.latest_prices()
-        if prices == False:
-            log.error(
-                f"Pair {self.pair['merged'].upper()} isn't offered by any of the exchanges. Exiting."
-            )
-            os.kill(os.getpid(), signal.SIGINT)
-
-        while True:
-            prices = await self.latest_prices()
-            price_diff = prices["max"]["price"] - prices["min"]["price"]
-            price_diff_perc = await self.percentage_change(
-                prices["max"]["price"], prices["min"]["price"]
-            )
-
-            log.info(f"Highest price {prices['max']}")
-            log.info(f"Lowest price {prices['min']}")
-            log.info(f"Price difference {price_diff}")
-            log.info(f"Price difference in % {price_diff_perc}")
-
-            # notify the platforms
-            for platform, obj in self.platforms.items():
-                if platform == "twitter":
-                    current_time = time.time()
-                    if (
-                        obj.cooldown + obj.last_reported < current_time
-                        and price_diff_perc >= self.threshold
-                    ):
-                        await obj.notify(
-                            self.pair,
-                            {
-                                "max": prices["max"],
-                                "min": prices["min"],
-                                "price_diff": price_diff,
-                                "price_diff_perc": price_diff_perc,
-                            },
-                        )
-            await asyncio.sleep(1)

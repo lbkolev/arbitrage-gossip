@@ -19,6 +19,8 @@ from exchanges.bitfinex import Bitfinex
 from platforms.base import BasePlatform
 from platforms.twitter import Twitter
 
+from calculate import Calculate
+from notify import Notify
 from calculateandnotify import CalculateAndNotify
 
 
@@ -27,23 +29,24 @@ async def main() -> None:
 
     # initialize each exchange's class
     exchanges: dict[str, BaseExchange] = {
-        "binance": Binance(pair["merged"]),
-        "ftx": FTX(pair["/"]),
-        "bybit": ByBit(pair["merged"]),
-        "huobi": Huobi(pair["merged"]),
-        "kucoin": KuCoin(pair["-"]),
-        "bitfinex": Bitfinex(pair["-"]),
+        "binance": Binance(pair=pair["merged"]),
+        "ftx": FTX(pair=pair["/"]),
+        "bybit": ByBit(pair=pair["merged"]),
+        "huobi": Huobi(pair=pair["merged"]),
+        "kucoin": KuCoin(pair=pair["-"]),
+        "bitfinex": Bitfinex(pair=pair["-"]),
     }
 
     # initialize each platform's class
     platforms: dict[str, BasePlatform] = {}
-
     if "twitter" in args.report_to:
         platforms["twitter"] =  Twitter(args.cooldown)
 
-    calculate_and_notify = CalculateAndNotify(
-        pair=pair, exchanges=exchanges, platforms=platforms, threshold=args.threshold
-    )
+    # initialize the class calculating the price differences
+    calculate: Calculate = Calculate(exchanges=exchanges)
+
+    # initialize the class responsible for notifying the platforms
+    notify: Notify = Notify(pair=pair, platforms=platforms, calculate=calculate, threshold=args.threshold)
 
     await asyncio.gather(
         exchanges["binance"].run(),
@@ -52,7 +55,7 @@ async def main() -> None:
         exchanges["huobi"].run(),
         exchanges["kucoin"].run(),
         exchanges["bitfinex"].run(),
-        calculate_and_notify.run(),
+        notify.run(),
     )
 
 
