@@ -20,10 +20,10 @@ Monitor cryptocurrency exchanges and alert on different platforms whenever price
 https://twitter.com/voices89394387
 ##
 ### Table of contents
-1)[What's that and how does it work?](#What's-that-and-how-does-it-work?)
-2)[Can i run one myself?](#Can-i-run-one-myself?)
-3)[Examples](#Examples)
-4)[Troubleshooting](#Troubleshooting)
+1)[What's that and how does it work?](#Whats-that-and-how-does-it-work)  
+2)[Can i run one myself?](#Can-i-run-one-myself)  
+3)[Examples](#Examples)  
+4)[Troubleshooting](#Troubleshooting)  
 
 
 ## What's that and how does it work?
