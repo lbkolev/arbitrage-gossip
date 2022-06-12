@@ -49,7 +49,7 @@ class Calculate:
                 log.error(
                     f"Only {self.exchanges_prices} is offering this pair. Aborting the program."
                 )
-                os.kill(os.getpid(), signal.SIGINT)
+                os.kill(os.getpid(), signal.SIGKILL)
 
             elif (exchange_min == exchange_max) and (len(self.exchanges_prices) > 1):
                 tmp = list(self.exchanges_prices.items())

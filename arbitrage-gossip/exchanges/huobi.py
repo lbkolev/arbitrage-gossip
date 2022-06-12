@@ -68,6 +68,8 @@ class Huobi(BaseExchange):
         if not await self._check_pair_exists():
             return
 
+        sub_retries = 0
+        max_sub_retries = 3
         async with aiohttp.ClientSession() as session:
             while True:
                 try:
@@ -76,8 +78,16 @@ class Huobi(BaseExchange):
                         f"{self.exchange} Created new Client session and Established a websocket connection towards {self.api_ws}"
                     )
 
-                    if not await self._subscribe(ws):
+                    sub_status = await self._subscribe(ws)
+                    if not sub_status and sub_retries <= max_sub_retries:
+                        sub_retries += 1
+                        await asyncio.sleep(3)
+                        continue
+                    if not sub_status and sub_retries > max_sub_retries:
+                        log.error(f"{self.exchange} Aborting due to too many subscription failures.")
                         return
+                    elif sub_status:
+                        sub_retries = 0
                     while True:
                         # https://huobiapi.github.io/docs/spot/v1/en/#q4-why-the-websocket-is-often-disconnected
                         # Q4：Why the WebSocket is often disconnected?
@@ -106,7 +116,7 @@ class Huobi(BaseExchange):
                                     ).strftime("%Y/%m/%dT%H:%M:%S.%f"),
                                 }
                         # Huobi disconnects & reconnects every few seconds, so we dont flood the log
-                        except (asyncio.exceptions.TimeoutError) as e:
+                        except (asyncio.exceptions.TimeoutError, TypeError) as e:
                             log.debug(str(e))
                             break
                         except (asyncio.exceptions.CancelledError, KeyboardInterrupt):

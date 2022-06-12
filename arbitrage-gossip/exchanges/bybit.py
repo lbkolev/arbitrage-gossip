@@ -74,6 +74,8 @@ class ByBit(BaseExchange):
         if not await self._check_pair_exists():
             return
 
+        sub_retries = 0
+        max_sub_retries = 3
         async with aiohttp.ClientSession() as session:
             log.debug(f"{self.exchange} Created new client session.")
             while True:
@@ -83,8 +85,17 @@ class ByBit(BaseExchange):
                         f"{self.exchange} Established a websocket connection towards {self.api_ws}"
                     )
 
-                    if not await self._subscribe(ws):
+                    sub_status = await self._subscribe(ws)
+                    if not sub_status and sub_retries <= max_sub_retries:
+                        sub_retries += 1
+                        await asyncio.sleep(3)
+                        continue
+                    if not sub_status and sub_retries > max_sub_retries:
+                        log.error(f"{self.exchange} Aborting due to too many subscription failures.")
                         return
+                    elif sub_status:
+                        sub_retries = 0
+                    
                     while True:
                         try:
                             msg = await ws.receive_json()
