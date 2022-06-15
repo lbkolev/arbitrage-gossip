@@ -54,7 +54,7 @@ class Huobi(BaseExchange):
             raw_resp = await ws.receive_bytes()
             resp = json.loads(gzip.decompress(raw_resp).decode())
 
-        if resp["status"] == "ok":
+        if isinstance(resp, dict) and resp["status"] == "ok":
             log.debug(f"{self.exchange} Subscribed to {self.pair}")
             return True
 
@@ -85,6 +85,7 @@ class Huobi(BaseExchange):
                         continue
                     if not sub_status and sub_retries > max_sub_retries:
                         log.error(f"{self.exchange} Aborting due to too many subscription failures.")
+                        self.data = {}
                         return
                     elif sub_status:
                         sub_retries = 0
@@ -123,6 +124,7 @@ class Huobi(BaseExchange):
                             log.warning(
                                 f"{self.exchange} Interruption occurred. Exiting."
                             )
+                            self.data = {}
                             return
                 except BaseException as e:
                     log.exception(e)

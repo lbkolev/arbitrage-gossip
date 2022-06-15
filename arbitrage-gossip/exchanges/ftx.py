@@ -56,7 +56,7 @@ class FTX(BaseExchange):
         # error looks like {'type': 'error', 'code': 404, 'msg': 'No such market: BTCUSDT'}
         # success looks like {'type': 'subscribed', 'channel': 'ticker', 'market': 'BTC/USDT'}
         resp = await ws.receive_json()
-        if resp["type"] == "subscribed":
+        if isinstance(resp,dict) and resp["type"] == "subscribed":
             log.debug(f"{self.exchange} Subscribed to {self.pair}")
             return True
 
@@ -88,6 +88,7 @@ class FTX(BaseExchange):
                         continue
                     if not sub_status and sub_retries > max_sub_retries:
                         log.error(f"{self.exchange} Aborting due to too many subscription failures.")
+                        self.data = {}
                         return
                     elif sub_status:
                         sub_retries = 0

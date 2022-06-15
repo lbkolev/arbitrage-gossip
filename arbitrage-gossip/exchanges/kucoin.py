@@ -78,7 +78,7 @@ class KuCoin(BaseExchange):
             async with session.post(url) as resp:
                 resp = await resp.json()
 
-                if int(resp["code"]) == 200000:
+                if isinstance(resp, dict) and int(resp["code"]) == 200000:
                     api_ws = resp["data"]["instanceServers"][0]["endpoint"]
                     token = resp["data"]["token"]
 
@@ -117,6 +117,7 @@ class KuCoin(BaseExchange):
                         continue
                     if not sub_status and sub_retries > max_sub_retries:
                         log.error(f"{self.exchange} Aborting due to too many subscription failures.")
+                        self.data = {}
                         return
                     elif sub_status:
                         sub_retries = 0
